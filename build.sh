@@ -1,7 +1,16 @@
 #!/bin/bash
 
+# LICH
+# author: sebasion9
+# config to compile for ARM
+# this build aims to run on rasp zero 2 w
+
+export CGO_ENABLED=1
 export GOOS=linux
 export GOARCH=arm64
+export CC=arm-linux-gnueabihf-gcc 
+export CXX=arm-linux-gnueabihf-g++
+export GOARM=7
 
 
 HOST="raspserver"
