@@ -4,10 +4,11 @@ package main
 // a client part is not yet implemented, and definitiely not on this repository
 
 import (
-	lich_db "lich/db"
 	api_machine "lich/api/machine"
 	api_resource "lich/api/resource"
 	api_version "lich/api/resource_version"
+	lich_db "lich/db"
+	"lich/db/model"
 	"log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -17,7 +18,6 @@ import (
 
 func main() {
 	// TODO: config
-	addr := "localhost:1111"
 	db, err := gorm.Open(sqlite.Open("lich.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to open db %s\n", err.Error())
@@ -25,19 +25,23 @@ func main() {
 
 	// migrate model to db
 	db.AutoMigrate(
-		&lich_db.Resource{},
-		&lich_db.Machine{},
-		&lich_db.ResourceVersion{},
+		&model.Resource{},
+		&model.Machine{},
+		&model.ResourceVersion{},
 	)
+	// database service
+	dbs := lich_db.DbService {
+		Db: db,
+	}
 
-
+	// http server
 	r := gin.New()
 
 	machine := r.Group("machine")
 	{
-		machine.GET("/register", api_machine.Register)
-
+		machine.POST("/register", api_machine.Register(dbs.Insert))
 	}
+
 	resource := r.Group("resource")
 	{
 		resource.GET("/dummy", api_resource.Dummy)
@@ -49,7 +53,7 @@ func main() {
 		version.GET("/dummy", api_version.Dummy)
 	}
 
-	panic(r.Run(addr))
+	panic(r.Run())
 
 }
 
