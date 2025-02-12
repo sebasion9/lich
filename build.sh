@@ -5,14 +5,20 @@
 # config to compile for ARM
 # this build aims to run on rasp zero 2 w
 
-export CGO_ENABLED=1
-export GOOS=linux
-export GOARCH=arm
-#export GOARCH=arm64
-export GOHOSTARCH=x86
-export CC=arm-linux-gnueabihf-gcc 
-export CXX=arm-linux-gnueabihf-g++
-export GOARM=7
+# env variables, idk why this way
+declare -A ENVS
+ENVS["CGO_ENABLED"]=1
+ENVS["GOOS"]=linux
+ENVS["GOARCH"]=arm
+ENVS["GOHOSTARCH"]=x86
+ENVS["CC"]=arm-linux-gnueabihf-gcc 
+ENVS["CXX"]=arm-linux-gnueabihf-g++
+ENVS["GOARM"]=7
+
+for key in ${!ENVS[@]}; do
+    export ${key}=${ENVS[${key}]}
+done
+
 
 
 HOST="raspserver"

@@ -1,4 +1,5 @@
 -- camel case because
+-- this is just a reference i guess, the model is automigrated using gorm anyway
 drop table if exists machines;
 create table machines(
     id int primary key unique not null,

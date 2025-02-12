@@ -1,37 +1,23 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	lich_db "lich/db"
+// this is lich sync server
+// a client part is not yet implemented, and definitiely not on this repository
 
+import (
+	lich_db "lich/db"
+	api_machine "lich/api/machine"
+	api_resource "lich/api/resource"
+	api_version "lich/api/resource_version"
+	"log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/gin-gonic/gin"
 )
-
-// machine - a machine is needed to be identified, to save data of last fetch, timestamps, whos
-// fetch changes - should be req every e.g every day, retrieves all changed entities >= last run date on this machine
-// update resource - should be req when updating an resource (e.g a file), only last change is viable, but old versions are kept
-// post resource - new resource to be posted
-// revert resource by version
-// get all resource versions
-
-// stack
-// sqlite3 with gorm
-// some good logging lib
-// gin/vanilla go
-
-// sqlite3 -init init.sql lich.db .quit
-// drop it, just use gorm
-
-// define model for db
-// write db stuff
-// requests
-
 
 func main() {
 	// TODO: config
-	fmt.Println("hello")
+	addr := "localhost:1111"
 	db, err := gorm.Open(sqlite.Open("lich.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to open db %s\n", err.Error())
@@ -44,6 +30,26 @@ func main() {
 		&lich_db.ResourceVersion{},
 	)
 
+
+	r := gin.New()
+
+	machine := r.Group("machine")
+	{
+		machine.GET("/register", api_machine.Register)
+
+	}
+	resource := r.Group("resource")
+	{
+		resource.GET("/dummy", api_resource.Dummy)
+
+	}
+	// version is ok now, because only one type of entity is planned to be versioned (resource)
+	version := r.Group("version")
+	{
+		version.GET("/dummy", api_version.Dummy)
+	}
+
+	panic(r.Run(addr))
 
 }
 

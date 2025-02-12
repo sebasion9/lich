@@ -6,6 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type Machine struct {
+	gorm.Model
+	Name string
+	LastFetch time.Time
+	// identification
+	Ip string
+	UserAgent string
+}
+
 type Resource struct {
 	gorm.Model
 	Name string
@@ -14,11 +23,6 @@ type Resource struct {
 	Machine Machine
 }
 
-type Machine struct {
-	gorm.Model
-	Name string
-	LastFetch time.Time
-}
 
 type ResourceVersion struct {
 	gorm.Model
