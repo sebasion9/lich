@@ -7,7 +7,9 @@
 
 export CGO_ENABLED=1
 export GOOS=linux
-export GOARCH=arm64
+export GOARCH=arm
+#export GOARCH=arm64
+export GOHOSTARCH=x86
 export CC=arm-linux-gnueabihf-gcc 
 export CXX=arm-linux-gnueabihf-g++
 export GOARM=7
@@ -20,30 +22,47 @@ REMOTE_USER="sion"
 REMOTE_DIR="/home/${REMOTE_USER}/${OUT_NAME}"
 ARGS="-o"
 
-echo "BUILDING ${OUT_NAME}"
-go build $ARGS $OUT_NAME $SRC
+echo "[BUILD] started building ${OUT_NAME} ..."
+go build -v $ARGS $OUT_NAME $SRC
 
 if [ $? -ne 0 ]
 then
-    echo "BUILD EXITED WITH ${$?}"
-    echo "EXITING SCRIPT WITH 1"
+    echo "[BUILD] build failed"
+    echo "[BUILD] exited with ${$?}"
+    echo "[ERR] exiting script with 1"
     exit 1
 fi
 
+echo "[BUILD] build succeded"
 
-echo "EXPORTING ${OUT_NAME} TO $REMOTE_USER:$HOST"
+
+echo "[SCP] exporting ${OUT_NAME} to $REMOTE_USER:$HOST"
 scp $OUT_NAME $REMOTE_USER@$HOST:$REMOTE_DIR
 
 
 if [ $? -ne 0 ]
 then
-    echo "EXPORT EXITED WITH ${$?}"
-    echo "EXITING SCRIPT WITH 1"
+    echo "[SCP] exited with ${$?}"
+    echo "[ERR] exiting script with 1"
     exit 1
 fi
 
-echo "CLEANING BUILD"
-go clean
+echo "[SCP] copy succeded"
+
+echo "[INFO] cleaning build"
+
+go clean -v
+if [ $? -ne 0 ]
+then
+    echo "[BUILD] clean failed"
+    echo "[BUILD] exited with ${$?}"
+    echo "[ERR] exiting script with 1"
+    exit 1
+fi
+
+echo "[INFO] script succeded"
+echo "[INFO] exiting script with 0"
+exit 0
 
 
 
