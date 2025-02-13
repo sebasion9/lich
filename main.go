@@ -10,6 +10,7 @@ import (
 	lich_db "lich/db"
 	"lich/db/model"
 	"log"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -40,6 +41,7 @@ func main() {
 	machine := r.Group("machine")
 	{
 		machine.POST("/register", api_machine.Register(dbs.Insert))
+		machine.POST("/lrd", api_machine.UpdateLRD(dbs.UpdateLRD))
 	}
 
 	resource := r.Group("resource")

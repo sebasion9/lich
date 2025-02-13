@@ -3,12 +3,12 @@ package model
 
 import (
 	"time"
+	lich_time "lich/tool/time"
 )
 
 type Model struct {
 	ID        uint `gorm:"primarykey;unique"`
 	CreatedAt time.Time
-	UpdatedAt time.Time
 }
 
 type Machine struct {
@@ -18,14 +18,19 @@ type Machine struct {
 	// identification
 	Ip string
 	UserAgent string
+	// D:
+	// SubscribeTo []uint
 }
 // default constructor for db.Machine
-func NewMachine(name string, lastFetch time.Time, ip string, userAgent string) Machine {
+func NewMachine(name string, userAgent string, ip string) Machine {
 	return Machine {
 		Name: name,
-		LastFetch: lastFetch,
 		Ip: ip,
 		UserAgent: userAgent,
+		LastFetch: lich_time.Now(),
+		Model: Model {
+			CreatedAt: lich_time.Now(),
+		},
 	}
 }
 
