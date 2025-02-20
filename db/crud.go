@@ -41,9 +41,19 @@ func (dbs *DbService) Get(entity any) (uint, error) {
 	var id uint
 	query := dbs.Db.Debug()
 	switch val := entity.(type) {
+		// machine is either []Machine by(ip) or Machine by(name),
 	case *model.Machine:
 		err = query.Where("name = ?", val.Name).First(&val).Error
 		id = val.ID
+		entity = val
+	case *[]model.Machine:
+		if len(*val) < 1 {
+			err = gorm.ErrRecordNotFound
+			break
+		}
+		first := (*val)[0]
+		err = query.Where("ip = ?", first.Ip).Find(&val).Error
+		id = first.ID
 		entity = val
 	case *model.Resource:
 		err = query.First(&val).Error
@@ -58,9 +68,9 @@ func (dbs *DbService) Get(entity any) (uint, error) {
 }
 
 
-func (dbs *DbService) UpdateLRD(id uint) error {
+func (dbs *DbService) UpdateLRD(id uint) (int, error) {
 	now := lich_time.Now()
-	err := dbs.Db.Model(&model.Machine{}).Where("id = ?", id).Update("last_fetch", now).Error
-	return err
+	result := dbs.Db.Model(&model.Machine{}).Where("id = ?", id).Update("last_fetch", now)
+	return int(result.RowsAffected), result.Error
 }
 

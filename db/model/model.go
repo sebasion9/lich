@@ -7,26 +7,30 @@ import (
 )
 
 type Model struct {
-	ID        uint `gorm:"primarykey;unique"`
-	CreatedAt time.Time
+	ID        uint `gorm:"primarykey;unique" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Machine struct {
 	Model
-	Name string `gorm:"unique"`
-	LastFetch time.Time
 	// identification
-	Ip string
-	UserAgent string
-	// D:
-	// SubscribeTo []uint
+	Name string `gorm:"unique" json:"name"`
+	Ip string `json:"ip"`
+	Os string `json:"os"`
+
+	LastFetch time.Time `json:"last_fetch"`
+
+	// TODO:
+	// list of resources to listen to, updatable
+	// references resource name in the request, but ids in model
+	// SubscribeTo []string `json:"subscribeTo"`
 }
 // default constructor for db.Machine
-func NewMachine(name string, userAgent string, ip string) Machine {
+func NewMachine(name string, os string, ip string) Machine {
 	return Machine {
 		Name: name,
 		Ip: ip,
-		UserAgent: userAgent,
+		Os: os,
 		LastFetch: lich_time.Now(),
 		Model: Model {
 			CreatedAt: lich_time.Now(),

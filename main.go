@@ -19,7 +19,9 @@ import (
 
 func main() {
 	// TODO: config
-	db, err := gorm.Open(sqlite.Open("lich.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("lich.db"), &gorm.Config{
+		TranslateError: true,
+	})
 	if err != nil {
 		log.Fatalf("Failed to open db %s\n", err.Error())
 	}
@@ -40,9 +42,9 @@ func main() {
 
 	machine := r.Group("machine")
 	{
-		machine.POST("/register", api_machine.PostBody(dbs.Insert))
-		machine.POST("/whoami", api_machine.PostBody(dbs.Get))
-		machine.POST("/lrd", api_machine.UpdateLRD(dbs.UpdateLRD))
+		machine.POST("/register", api_machine.Register(dbs.Insert))
+		machine.POST("/whoami", api_machine.WhoAmI(dbs.Get))
+		machine.POST("/lrd/:id", api_machine.UpdateLRD(dbs.UpdateLRD))
 	}
 
 	resource := r.Group("resource")
