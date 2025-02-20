@@ -40,14 +40,14 @@ func main() {
 
 	machine := r.Group("machine")
 	{
-		machine.POST("/register", api_machine.Register(dbs.Insert))
+		machine.POST("/register", api_machine.PostBody(dbs.Insert))
+		machine.POST("/whoami", api_machine.PostBody(dbs.Get))
 		machine.POST("/lrd", api_machine.UpdateLRD(dbs.UpdateLRD))
 	}
 
 	resource := r.Group("resource")
 	{
-		resource.GET("/dummy", api_resource.Dummy)
-
+		resource.GET("/new", api_resource.New(func(){}))
 	}
 	// version is ok now, because only one type of entity is planned to be versioned (resource)
 	version := r.Group("version")

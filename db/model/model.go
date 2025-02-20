@@ -13,7 +13,7 @@ type Model struct {
 
 type Machine struct {
 	Model
-	Name string
+	Name string `gorm:"unique"`
 	LastFetch time.Time
 	// identification
 	Ip string

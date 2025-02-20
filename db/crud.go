@@ -20,18 +20,43 @@ func (dbs *DbService) Insert(entity any) (uint, error) {
 	var id uint
 	query := dbs.Db.Debug()
 	switch val := entity.(type) {
-	case model.Machine:
+	case *model.Machine:
 		err = query.Create(&val).Error
 		id = val.ID
-	case model.Resource:
+		entity = val
+	case *model.Resource:
 		err = query.Create(&val).Error
 		id = val.ID
-	case model.ResourceVersion:
+		entity = val
+	case *model.ResourceVersion:
 		err = query.Create(&val).Error
 		id = val.ID
+		entity = val
 	}
 	return id, err
 }
+
+func (dbs *DbService) Get(entity any) (uint, error) {
+	err := errors.New("Invalid entity type")
+	var id uint
+	query := dbs.Db.Debug()
+	switch val := entity.(type) {
+	case *model.Machine:
+		err = query.Where("name = ?", val.Name).First(&val).Error
+		id = val.ID
+		entity = val
+	case *model.Resource:
+		err = query.First(&val).Error
+		id = val.ID
+		entity = val
+	case *model.ResourceVersion:
+		err = query.First(&val).Error
+		id = val.ID
+		entity = val
+	}
+	return id, err
+}
+
 
 func (dbs *DbService) UpdateLRD(id uint) error {
 	now := lich_time.Now()
