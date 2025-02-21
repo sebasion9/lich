@@ -68,10 +68,6 @@ func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 
 
 		_, err = dbOp(&machine)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, nil)
-			return
-		}
 
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			c.JSON(http.StatusBadRequest, gin.H {
