@@ -22,7 +22,7 @@ type Machine struct {
 
 type Resource struct {
 	Model
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required" gorm:"unique"`
 	Type string `json:"type" binding:"required"`
 
 	MachineID uint `json:"machine_id" binding:"required"`
@@ -30,15 +30,14 @@ type Resource struct {
 
 	// actual resource version
 	VersionID uint `json:"version_id"`
-	Version ResourceVersion `json:"version"`
+	Version Version `json:"version"`
 }
 
 
-type ResourceVersion struct {
+type Version struct {
 	Model
-	Num uint
-	Url string
-	Date time.Time
+	Num uint `json:"num"`
+	Url string `json:"url"`
 }
 
 type Subscription struct {

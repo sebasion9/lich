@@ -30,7 +30,7 @@ func main() {
 	db.AutoMigrate(
 		&model.Resource{},
 		&model.Machine{},
-		&model.ResourceVersion{},
+		&model.Version{},
 		&model.Subscription{},
 	)
 	// database service

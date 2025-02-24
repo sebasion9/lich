@@ -12,7 +12,7 @@ import (
 // define whole CRUD for resource
 // extend it with sync functionalities (pending?, fetch)
 
-func New(dbOp func()) gin.HandlerFunc {
+func New(dbOp func(model.Resource) (model.Resource, error)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var resource model.Resource
 		err := c.ShouldBindJSON(&resource)
@@ -22,6 +22,21 @@ func New(dbOp func()) gin.HandlerFunc {
 			})
 			return
 		}
+		resource.Version = model.Version{}
+		resource.Machine = model.Machine{}
+
+
+		res, err := dbOp(resource)
+
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"msg": "resource with this name already exist",
+			})
+			return
+		}
+
+
+		c.JSON(http.StatusOK, res)
 	}
 }
 

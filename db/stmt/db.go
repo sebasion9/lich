@@ -10,7 +10,7 @@ type DbService struct {
 func NewDb(db *gorm.DB) DbService {
 	return DbService {
 		db : db,
-		Machine : machineService{},
-		Resource : resourceService{},
+		Machine : machineService {db},
+		Resource : resourceService {db},
 	}
 }
