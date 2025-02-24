@@ -7,7 +7,7 @@ import (
 	api_machine "lich/api/machine"
 	api_resource "lich/api/resource"
 	api_version "lich/api/resource_version"
-	lich_db "lich/db"
+	lich_db "lich/db/stmt"
 	"lich/db/model"
 	"log"
 
@@ -31,30 +31,34 @@ func main() {
 		&model.Resource{},
 		&model.Machine{},
 		&model.ResourceVersion{},
+		&model.Subscription{},
 	)
 	// database service
-	dbs := lich_db.DbService {
-		Db: db,
-	}
+	dbs := lich_db.NewDb(db)
 
 	// http server
 	r := gin.New()
 
 	machine := r.Group("machine")
 	{
-		machine.POST("/register", api_machine.Register(dbs.Insert))
-		machine.POST("/whoami", api_machine.WhoAmI(dbs.Get))
-		machine.POST("/lrd/:id", api_machine.UpdateLRD(dbs.UpdateLRD))
+		machine.POST("/register", api_machine.Register(dbs.Machine.Insert))
+		machine.POST("/whoami", api_machine.WhoAmI(dbs.Machine.GetOneOrMult))
 	}
 
 	resource := r.Group("resource")
 	{
-		resource.GET("/new", api_resource.New(func(){}))
+		resource.GET("/all", api_resource.GetAll(dbs.Resource.GetAllResource))
+		resource.POST("/new", api_resource.New(dbs.Resource.Insert))
 	}
 	// version is ok now, because only one type of entity is planned to be versioned (resource)
 	version := r.Group("version")
 	{
 		version.GET("/dummy", api_version.Dummy)
+	}
+
+	subscribe := r.Group("subscribe")
+	{
+		subscribe.GET(":id", func(ctx *gin.Context) {})
 	}
 
 	panic(r.Run())

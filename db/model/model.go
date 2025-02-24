@@ -3,7 +3,6 @@ package model
 
 import (
 	"time"
-	lich_time "lich/tool/time"
 )
 
 type Model struct {
@@ -18,40 +17,37 @@ type Machine struct {
 	Ip string `json:"ip"`
 	Os string `json:"os"`
 
-	LastFetch time.Time `json:"last_fetch"`
-
-	// TODO:
-	// list of resources to listen to, updatable
-	// references resource name in the request, but ids in model
-	// SubscribeTo []string `json:"subscribeTo"`
-}
-// default constructor for db.Machine
-func NewMachine(name string, os string, ip string) Machine {
-	return Machine {
-		Name: name,
-		Ip: ip,
-		Os: os,
-		LastFetch: lich_time.Now(),
-		Model: Model {
-			CreatedAt: lich_time.Now(),
-		},
-	}
+	LastSync time.Time `json:"last_sync"`
 }
 
 type Resource struct {
 	Model
-	Name string
-	Path string
-	MachineID uint
-	Machine Machine
+	Name string `json:"name" binding:"required"`
+	Type string `json:"type" binding:"required"`
+
+	MachineID uint `json:"machine_id" binding:"required"`
+	Machine Machine `json:"machine"`
+
+	// actual resource version
+	VersionID uint `json:"version_id"`
+	Version ResourceVersion `json:"version"`
 }
 
 
 type ResourceVersion struct {
 	Model
-	ResourceID uint
-	Resource Resource
 	Num uint
+	Url string
 	Date time.Time
 }
+
+type Subscription struct {
+	Model
+	MachineID uint
+	Machine Machine
+
+	ResourceID uint
+	Resource Resource
+}
+
 

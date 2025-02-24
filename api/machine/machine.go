@@ -4,7 +4,7 @@ import (
 	"errors"
 	"lich/db/model"
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -38,6 +38,7 @@ func WhoAmI(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
 				"msg" : "something went wrong while processing post machine",
+				"err" : err.Error(),
 			})
 			return
 		}
@@ -65,14 +66,13 @@ func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 		}
 
 		machine.Ip = c.RemoteIP()
-
+		machine.LastSync = time.Now()
 
 		_, err = dbOp(&machine)
 
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			c.JSON(http.StatusBadRequest, gin.H {
 				"msg": "machine with this name already exist, choose another one",
-				"err": err.Error(),
 			})
 			return
 		}
@@ -80,6 +80,7 @@ func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
 				"msg" : "something went wrong while processing post machine",
+				"err": err.Error(),
 			})
 			return
 		}
@@ -89,30 +90,3 @@ func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 
 }
 
-
-func UpdateLRD(dbOp func(uint) (int, error)) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg" : "bad id format",
-			})
-			return
-		}
-
-		rowsAff, err := dbOp(uint(id))
-		if rowsAff == 0 {
-			c.JSON(http.StatusNotFound, nil)
-			return
-		}
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H {
-				"msg" : "something went wrong while updating last fetch",
-			})
-			return
-		}
-
-		c.JSON(http.StatusNoContent, nil)
-	}
-}
