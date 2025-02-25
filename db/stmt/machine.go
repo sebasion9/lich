@@ -48,3 +48,10 @@ func (ms *machineService) GetOneOrMult(entity any) (uint, error) {
 	return id, err
 }
 
+func (ms *machineService) GetById(id uint) (model.Machine, error) {
+	var machine model.Machine
+	machine.ID = id
+	err := ms.First(&machine).Error
+	return machine, err
+}
+

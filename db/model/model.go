@@ -27,17 +27,20 @@ type Resource struct {
 
 	MachineID uint `json:"machine_id" binding:"required"`
 	Machine Machine `json:"machine"`
-
-	// actual resource version
-	VersionID uint `json:"version_id"`
-	Version Version `json:"version"`
 }
 
 
+// Url?
+// Blob?
 type Version struct {
 	Model
 	Num uint `json:"num"`
 	Url string `json:"url"`
+
+	ResourceID uint `json:"resource_id"`
+	Resource Resource `json:"resource"`
+
+	Current bool `json:"current"`
 }
 
 type Subscription struct {

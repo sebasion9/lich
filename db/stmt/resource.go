@@ -12,9 +12,25 @@ type resourceService struct {
 
 func (rs *resourceService) GetAllResource() ([]model.Resource, error) {
 	var resources []model.Resource
-	err := rs.Preload("Machine").Preload("Version").Find(&resources).Error
+	err := rs.Preload("Machine").Find(&resources).Error
 	return resources, err
 }
+
+func (rs *resourceService) GetById(id uint) (model.Resource, error) {
+	var resource model.Resource
+	resource.ID = id
+	err := rs.Preload("Machine").First(&resource).Error
+	return resource, err
+}
+func (rs *resourceService) GetVersionsById(id uint) ([]model.Version, error) {
+	var versions []model.Version
+	err := rs.Where("resource_id = ?", id).
+	Preload("Resource").
+	Preload("Resource.Machine").
+	Find(&versions).Error
+	return versions, err
+}
+
 
 func (rs *resourceService) Insert(res model.Resource) (model.Resource, error) {
 	ver := model.Version {
@@ -22,18 +38,21 @@ func (rs *resourceService) Insert(res model.Resource) (model.Resource, error) {
 		Url: fmt.Sprintf("%s@%d", res.Name, 0),
 	}
 
-	err := rs.Create(&ver).Error
+
+	err := rs.Create(&res).Error
 	if err != nil {
 		return res, err
 	}
 
-	res.VersionID = ver.ID
-	err = rs.Create(&res).Error
+	ver.ResourceID = res.ID
+	ver.Current = true
+	err = rs.Create(&ver).Error
 	if err != nil {
 		return res, err
 	}
 
-	err = rs.Preload("Machine").Preload("Version").First(&res).Error
+
+	err = rs.Preload("Machine").First(&res).Error
 
 	return res, err
 }
