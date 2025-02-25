@@ -5,6 +5,12 @@
 # config to compile for ARM
 # this build aims to run on rasp zero 2 w
 
+# check if build & run
+RUN=false
+if [ "$1" = "run" ] || [ "$1" = "RUN" ]; then
+    RUN=true
+fi
+
 # env variables, idk why this way
 declare -A ENVS
 ENVS["CGO_ENABLED"]=1
@@ -54,6 +60,16 @@ then
 fi
 
 echo "[SCP] copy succeded"
+
+# run
+if [ "$RUN" = "true" ];then
+    echo "[RUN] entering build & run mode"
+    echo "[RUN] opening ssh session"
+    ssh -t -Y $REMOTE_USER@$HOST "$REMOTE_DIR/$OUT_NAME"
+    echo "[RUN] exiting ssh"
+else
+    echo "[RUN] build only mode"
+fi
 
 echo "[INFO] cleaning build"
 
