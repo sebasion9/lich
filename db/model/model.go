@@ -46,11 +46,11 @@ type Version struct {
 
 type Subscription struct {
 	Model
-	MachineID uint
-	Machine Machine
+	MachineID uint `json:"machine_id"`
+	Machine Machine `json:"machine"`
 
-	ResourceID uint
-	Resource Resource
+	ResourceID uint `json:"resource_id"`
+	Resource Resource `json:"resource"`
 }
 
 

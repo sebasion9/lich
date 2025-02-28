@@ -7,6 +7,7 @@ import (
 	api_machine "lich/api/machine"
 	api_resource "lich/api/resource"
 	api_version "lich/api/version"
+	api_subscribe "lich/api/subscribe"
 	lich_db "lich/db/stmt"
 	middleware "lich/middleware"
 	"lich/db/model"
@@ -61,7 +62,8 @@ func main() {
 
 	subscribe := r.Group("subscribe")
 	{
-		subscribe.GET(":id", func(ctx *gin.Context) {})
+		subscribe.PUT(":resource_id/:machine_id", middleware.PathParamUint("resource_id", "machine_id"), api_subscribe.Subscribe(&dbs))
+		subscribe.GET(":id", middleware.PathParamUint("id"), api_subscribe.GetMult(&dbs))
 	}
 
 	panic(r.Run())

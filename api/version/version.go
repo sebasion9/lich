@@ -3,7 +3,6 @@ package version
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"lich/api"
 	lich_db "lich/db/stmt"

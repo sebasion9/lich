@@ -6,7 +6,6 @@ import (
 	"lich/db/model"
 	lich_db "lich/db/stmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,9 +31,17 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 			})
 			return
 		}
+
 		resource.Name = newResource.Name
-		resource.MachineID = newResource.MachineId
 		resource.Type = newResource.Type
+		resource.MachineID = newResource.MachineId
+
+		if resource.Name == "" || resource.Type == "" {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"msg": "fields \"name\" and \"type\" are required",
+			})
+			return
+		}
 
 		resource.CurrentVersionID = 0
 		resource.LastChangeAt = time.Now()

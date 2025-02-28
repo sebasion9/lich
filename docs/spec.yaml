@@ -208,55 +208,58 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /sub/{id}:
+  /sub/{resource_id}/{machine_id}:
     put:
       summary: Subscribes Machine to Resource, on sync it fetches current version if Resource changed since last sync.
       tags:
         - subscription
       parameters:
-        - name: id
+        - name: resource_id
           in: path
           required: true
           description: id of resource
           schema:
             type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                machine_id:
-                  type: integer
-                  format: id
+        - name: machine_id
+          in: path
+          required: true
+          description: id of machine
+          schema:
+            type: integer
       responses:
         '204':
           description: success no content
-    post:
-      summary: Returns Subscription by Machine and Resource
+  /sub/{id}:
+    get:
+      summary: Retrieve all subscriptions by Machine
       tags:
         - subscription
       parameters:
         - name: id
           in: path
           required: true
-          description: id of resource
+          description: either machine_id or resource_id
           schema:
             type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                machine_id:
-                  type: integer
-                  format: id
+        - name: by
+          in: query
+          required: false
+          description: default = machine
+          schema:
+            type: string
+            enum:
+              - machine
+              - resource
       responses:
         '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Subscription'
+                type: object
+                properties:
+                  sub:
+                    $ref: '#/components/schemas/Subscription'
         '400':
           $ref: '#/components/responses/400Error'
         '404':
@@ -473,12 +476,6 @@ components:
             message: This resource is forbidden for this scope of permissions
     404Error:
       description: requested resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            message: Requested resource not found
 tags:
   - name: machine
     description: Everything related to Machine entity
