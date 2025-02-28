@@ -7,7 +7,7 @@ servers:
   - url: https://lich.local
 paths:
   /machine/register:
-    post:
+    put:
       summary: Creates machine and returns itself
       description: 'Should be used by client if no machine is cached.'
       operationId: ''
@@ -32,21 +32,21 @@ paths:
                 $ref: '#/components/schemas/Machine'
         '400':
           $ref: '#/components/responses/400Error'
-  /machine/whoami:
-    post:
+  /machine/{name}:
+    get:
       summary: Returns Machine information
       description: "If name provided, return Machine by name, if not provided, return all Machines registered at this IP"
       operationId: ''
       tags:
         - machine
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            format: string
+              
       responses:
         '200':
           description: success
@@ -57,6 +57,56 @@ paths:
                 - $ref: '#/components/schemas/Machine'
                 - $ref: '#/components/schemas/MachineArray'
           
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  /resource/new:
+    put:
+      summary: Creates new Resource
+      description: 'Used on initializing Resource definition'
+      tags:
+        - resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                machine_id:
+                  type: integer
+                  format: id
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/400Error'
+  /resource/edit:
+    post:
+      summary: Edit Resource definition
+      description: "created_at and machine can't be modified"
+      tags:
+        - resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
         '400':
           $ref: '#/components/responses/400Error'
         '404':
@@ -100,11 +150,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResourceArray'
-  /resource/versions/{id}:
+  /resource/version/new-version/{id}:
+    put:
+      summary: Create new version on resource.
+      description: "Warning: creating new version sets Resource's current version"
+      tags:
+        - version
+      parameters:
+        - name: id
+          description: id of resource
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                blob:
+                  type: string
+                  format: byte
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+          
+  /resource/version/{id}:
     get:
       summary: Returns versions of provided resource id.
       tags:
-        - resource
+        - version
       parameters:
         - name: id
           in: path
@@ -123,22 +207,39 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /resource/new:
-    post:
-      summary: Creates new Resource
-      description: 'Used on initializing Resource definition'
+  /sub/{id}:
+    put:
+      summary: Subscribes Machine to Resource, on sync it fetches current version if Resource changed since last sync.
       tags:
-        - resource
+        - subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id of resource
+          schema:
+            type: integer
       requestBody:
         content:
           application/json:
             schema:
-              type: object
               properties:
-                name:
-                  type: string
-                type:
-                  type: string
+                machine_id:
+                  type: integer
+                  format: id
+      responses:
+        '204':
+          description: success no content
+  /sync:
+    post:
+      summary: Synchronizes subscribed resources if changed since last sync.
+      tags:
+        - sync
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
                 machine_id:
                   type: integer
                   format: id
@@ -148,11 +249,72 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
+                $ref: '#/components/schemas/VersionArray'
+        '204':
+          description: success no content
         '400':
           $ref: '#/components/responses/400Error'
-          
-                  
+  /sync/{id}:
+    post:
+      summary: Synchronizes selected resource (forcefully)
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: integer
+            format: id
+      tags:
+        - sync
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                machine_id:
+                  type: integer
+                  format: id
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  /sync/{id}/{versionId}:
+    post:
+      summary: Synchronizes selected version of Resource (forcefully)
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: integer
+            format: id
+        - name: versionId
+          required: true
+          in: path
+          schema:
+            type: integer
+            format: id
+      tags:
+        - sync
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+            
 components:
   schemas:
     Machine:
@@ -167,7 +329,7 @@ components:
         os:
           type: string
           format: string
-        last_fetch:
+        last_sync:
           type: string
           format: date-time
         created_at:
@@ -189,12 +351,18 @@ components:
         created_at:
           type: string
           format: date-time
+        last_change_at:
+          type: string
+          format: date-time
         name:
           type: string
           format: string
         type:
           type: string
           format: string
+        current_version_id:
+          type: integer
+          format: integer
         machine:
           $ref: '#/components/schemas/Machine'
     ResourceArray:
@@ -210,12 +378,9 @@ components:
         created_at:
           type: string
           format: date-time
-        url:
+        blob:
           type: string
-          format: path
-        current:
-          type: boolean
-          format: boolean
+          format: byte
         num:
           type: integer
           format: integer
@@ -273,4 +438,10 @@ tags:
   - name: machine
     description: Everything related to Machine entity
   - name: resource
-    description: Everything related to Resource entity 
+    description: Everything related to Resource entity
+  - name: version
+    description: Everything related to Version entity
+  - name: subscription
+    description: Everything related to Subscription entity
+  - name: sync
+    description: Everything related to syncing 
