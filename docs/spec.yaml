@@ -1,0 +1,276 @@
+openapi: 3.0.3
+info:
+  title: lich
+  version: '1.0'
+  description: API spec
+servers:
+  - url: https://lich.local
+paths:
+  /machine/register:
+    post:
+      summary: Creates machine and returns itself
+      description: 'Should be used by client if no machine is cached.'
+      operationId: ''
+      tags:
+        - machine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                os:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+        '400':
+          $ref: '#/components/responses/400Error'
+  /machine/whoami:
+    post:
+      summary: Returns Machine information
+      description: "If name provided, return Machine by name, if not provided, return all Machines registered at this IP"
+      operationId: ''
+      tags:
+        - machine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/Machine'
+                - $ref: '#/components/schemas/MachineArray'
+          
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  /resource/{id}:
+    get:
+      summary: Returns resource by id
+      description: ''
+      operationId: ''
+      parameters:
+        - name: id
+          in: path
+          description: id of resource
+          required: true
+          schema:
+            type: integer
+      tags:
+        - resource
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  /resource/all:
+    get:
+      summary: Returns all created resources
+      description: ''
+      operationId: ''
+      tags: 
+        - resource
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceArray'
+  /resource/versions/{id}:
+    get:
+      summary: Returns versions of provided resource id.
+      tags:
+        - resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id of resource
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionArray'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  /resource/new:
+    post:
+      summary: Creates new Resource
+      description: 'Used on initializing Resource definition'
+      tags:
+        - resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                machine_id:
+                  type: integer
+                  format: id
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/400Error'
+          
+                  
+components:
+  schemas:
+    Machine:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: id
+        name:
+          type: string
+          format: string
+        os:
+          type: string
+          format: string
+        last_fetch:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        ip:
+          type: string
+          format: ipv4
+    MachineArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/Machine'
+    Resource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: id
+        created_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+          format: string
+        type:
+          type: string
+          format: string
+        machine:
+          $ref: '#/components/schemas/Machine'
+    ResourceArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/Resource'
+    Version:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: id
+        created_at:
+          type: string
+          format: date-time
+        url:
+          type: string
+          format: path
+        current:
+          type: boolean
+          format: boolean
+        num:
+          type: integer
+          format: integer
+        resource:
+          $ref: '#/components/schemas/Resource'
+    VersionArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/Version'
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+  responses:
+    GenericError:
+      description: generic error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    400Error:
+      description: bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Invalid request
+    401Error:
+      description: no authorization
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: No authorization
+    403Error:
+      description: this resource is forbidden for this scope of permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: This resource is forbidden for this scope of permissions
+    404Error:
+      description: requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Requested resource not found
+tags:
+  - name: machine
+    description: Everything related to Machine entity
+  - name: resource
+    description: Everything related to Resource entity 

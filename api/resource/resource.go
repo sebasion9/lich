@@ -83,4 +83,15 @@ func GetVersions(dbs *lich_db.DbService) gin.HandlerFunc {
 	}
 }
 
+func Edit(dbs *lich_db.DbService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H {
+				"msg" : "invalid id format",
+			})
+			return
+		}
+	}
+}
 

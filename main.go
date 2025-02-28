@@ -50,6 +50,7 @@ func main() {
 		resource.GET("/all", api_resource.GetAll(dbs.Resource.GetAllResource))
 		resource.GET("/versions/:id", api_resource.GetVersions(&dbs))
 		resource.POST("/new", api_resource.New(&dbs))
+		resource.POST("/edit/:id", api_resource.Edit(&dbs))
 	}
 	// version is ok now, because only one type of entity is planned to be versioned (resource)
 	version := r.Group("version")
