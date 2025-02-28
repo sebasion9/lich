@@ -98,7 +98,26 @@ func GetAll(dbOp func() ([]model.Resource, error)) gin.HandlerFunc {
 }
 func DeleteById(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// delete versions too
+		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"msg": "invalid id format",
+			})
+			return
+		}
+		rows, err := dbs.Resource.DeleteById(uint(id))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H {
+				"msg" : "internal server error",
+				"err" : err.Error(),
+			})
+			return
+		}
+		if rows == 0 {
+			c.JSON(http.StatusNotFound, nil)
+			return
+		}
+		c.JSON(http.StatusNoContent, nil)
 	}
 }
 

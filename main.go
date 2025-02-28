@@ -50,11 +50,12 @@ func main() {
 		resource.PUT("/new", api_resource.New(&dbs))
 		resource.GET(":id", api_resource.GetById(&dbs))
 		resource.GET("/all", api_resource.GetAll(dbs.Resource.GetAllResource))
+		resource.DELETE(":id", api_resource.DeleteById(&dbs))
 
 		// TODO: edit according to spec
-		resource.DELETE(":id", api_resource.DeleteById(&dbs))
 		// version
-		resource.GET("/versions/:id", api_version.GetVersions(&dbs))
+		resource.PUT("/version/new-version/:id", api_version.New(&dbs))
+		resource.GET("/version/:id", api_version.GetVersions(&dbs))
 	}
 
 	subscribe := r.Group("subscribe")
