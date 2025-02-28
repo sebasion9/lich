@@ -6,7 +6,7 @@ package main
 import (
 	api_machine "lich/api/machine"
 	api_resource "lich/api/resource"
-	api_version "lich/api/resource_version"
+	api_version "lich/api/version"
 	lich_db "lich/db/stmt"
 	"lich/db/model"
 	"log"
@@ -41,21 +41,20 @@ func main() {
 
 	machine := r.Group("machine")
 	{
-		machine.POST("/register", api_machine.Register(dbs.Machine.Insert))
-		machine.POST("/whoami", api_machine.WhoAmI(dbs.Machine.GetOneOrMult))
+		machine.PUT("/register", api_machine.Register(dbs.Machine.Insert))
+		machine.GET("/:name", api_machine.WhoAmI(dbs.Machine.GetOneOrMult))
 	}
 
 	resource := r.Group("resource")
 	{
+		resource.PUT("/new", api_resource.New(&dbs))
+		resource.GET(":id", api_resource.GetById(&dbs))
 		resource.GET("/all", api_resource.GetAll(dbs.Resource.GetAllResource))
-		resource.GET("/versions/:id", api_resource.GetVersions(&dbs))
-		resource.POST("/new", api_resource.New(&dbs))
-		resource.POST("/edit/:id", api_resource.Edit(&dbs))
-	}
-	// version is ok now, because only one type of entity is planned to be versioned (resource)
-	version := r.Group("version")
-	{
-		version.GET("/dummy", api_version.Dummy)
+
+		// TODO: edit according to spec
+		resource.DELETE(":id", api_resource.DeleteById(&dbs))
+		// version
+		resource.GET("/versions/:id", api_version.GetVersions(&dbs))
 	}
 
 	subscribe := r.Group("subscribe")

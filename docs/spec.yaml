@@ -29,7 +29,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Machine'
+                $ref: '#/components/schemas/Machine'  
         '400':
           $ref: '#/components/responses/400Error'
   /machine/{name}:
@@ -80,6 +80,9 @@ paths:
                 machine_id:
                   type: integer
                   format: id
+                blob:
+                  type: string
+                  format: byte
       responses:
         '200':
           description: success
@@ -89,28 +92,21 @@ paths:
                 $ref: '#/components/schemas/Resource'
         '400':
           $ref: '#/components/responses/400Error'
-  /resource/edit:
-    post:
-      summary: Edit Resource definition
-      description: "created_at and machine can't be modified"
-      tags:
+
+  /resource/all:
+    get:
+      summary: Returns all created resources
+      description: ''
+      operationId: ''
+      tags: 
         - resource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Resource'
       responses:
         '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
-        '400':
-          $ref: '#/components/responses/400Error'
-        '404':
-          $ref: '#/components/responses/404Error'
+                $ref: '#/components/schemas/ResourceArray'
   /resource/{id}:
     get:
       summary: Returns resource by id
@@ -136,24 +132,29 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /resource/all:
-    get:
-      summary: Returns all created resources
-      description: ''
-      operationId: ''
-      tags: 
+    delete:
+      summary: Delete Resource defintion, deletes all versions.
+      tags:
         - resource
+      parameters:
+        - name: id
+          in: path
+          description: id of resource
+          required: true
+          schema:
+            type: integer
       responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceArray'
+        '204':
+          description: success no content
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+
   /resource/version/new-version/{id}:
     put:
       summary: Create new version on resource.
-      description: "Warning: creating new version sets Resource's current version"
+      description: "Warning: creating new version sets Resource's current version. Adding new version edits Resource definition (last_change_at)"
       tags:
         - version
       parameters:
@@ -230,6 +231,37 @@ paths:
       responses:
         '204':
           description: success no content
+    post:
+      summary: Returns Subscription by Machine and Resource
+      tags:
+        - subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id of resource
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                machine_id:
+                  type: integer
+                  format: id
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+      
   /sync:
     post:
       summary: Synchronizes subscribed resources if changed since last sync.
@@ -390,6 +422,19 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Version'
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: id
+        created_at:
+          type: string
+          format: date-time
+        machine: 
+          $ref: '#/components/schemas/Machine'
+        resource:
+          $ref: '#/components/schemas/Resource'
     ErrorResponse:
       type: object
       properties:

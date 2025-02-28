@@ -13,23 +13,17 @@ import (
 func WhoAmI(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var machine model.Machine
-		err := c.ShouldBindJSON(&machine)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg" : "bad body format",
-			})
-			return
-		}
-
-		machine.Ip = c.RemoteIP()
+		name := c.Param("name")
+		machine.Name = name
 
 		var entity any = &machine
-		if machine.Name == "" {
+		if machine.Name == ":name" {
+			machine.Ip = c.RemoteIP()
 			machines := []model.Machine{machine}
 			entity = &machines
 		}
 
-		_, err = dbOp(entity)
+		_, err := dbOp(entity)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, nil)
 			return

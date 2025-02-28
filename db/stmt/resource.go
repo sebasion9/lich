@@ -1,7 +1,6 @@
 package stmt
 
 import (
-	"fmt"
 	"lich/db/model"
 	"gorm.io/gorm"
 )
@@ -32,12 +31,11 @@ func (rs *resourceService) GetVersionsById(id uint) ([]model.Version, error) {
 }
 
 
-func (rs *resourceService) Insert(res model.Resource) (model.Resource, error) {
+func (rs *resourceService) Insert(res model.Resource, blob string) (model.Resource, error) {
 	ver := model.Version {
 		Num : 0,
-		Url: fmt.Sprintf("%s@%d", res.Name, 0),
+		Blob: blob,
 	}
-
 
 	err := rs.Create(&res).Error
 	if err != nil {
@@ -45,7 +43,6 @@ func (rs *resourceService) Insert(res model.Resource) (model.Resource, error) {
 	}
 
 	ver.ResourceID = res.ID
-	ver.Current = true
 	err = rs.Create(&ver).Error
 	if err != nil {
 		return res, err
