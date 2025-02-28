@@ -8,6 +8,7 @@ import (
 	api_resource "lich/api/resource"
 	api_version "lich/api/version"
 	lich_db "lich/db/stmt"
+	middleware "lich/middleware"
 	"lich/db/model"
 	"log"
 
@@ -41,21 +42,21 @@ func main() {
 
 	machine := r.Group("machine")
 	{
-		machine.PUT("/register", api_machine.Register(dbs.Machine.Insert))
-		machine.GET("/:name", api_machine.WhoAmI(dbs.Machine.GetOneOrMult))
+		machine.PUT("/register", api_machine.Register(&dbs))
+		machine.GET("/:name", api_machine.WhoAmI(&dbs))
 	}
 
 	resource := r.Group("resource")
 	{
 		resource.PUT("/new", api_resource.New(&dbs))
-		resource.GET(":id", api_resource.GetById(&dbs))
-		resource.GET("/all", api_resource.GetAll(dbs.Resource.GetAllResource))
-		resource.DELETE(":id", api_resource.DeleteById(&dbs))
+		resource.GET("/all", api_resource.GetAll(&dbs))
 
-		// TODO: edit according to spec
+		resource.GET(":id", middleware.PathParamUint("id"), api_resource.GetById(&dbs))
+		resource.DELETE(":id", middleware.PathParamUint("id"), api_resource.DeleteById(&dbs))
+
 		// version
-		resource.PUT("/version/new-version/:id", api_version.New(&dbs))
-		resource.GET("/version/:id", api_version.GetVersions(&dbs))
+		resource.PUT("/version/new-version/:id", middleware.PathParamUint("id"), api_version.New(&dbs))
+		resource.GET("/version/:id", middleware.PathParamUint("id"), api_version.GetVersions(&dbs))
 	}
 
 	subscribe := r.Group("subscribe")

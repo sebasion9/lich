@@ -3,6 +3,7 @@ package machine
 import (
 	"errors"
 	"lich/db/model"
+	lich_db "lich/db/stmt"
 	"net/http"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func WhoAmI(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
+func WhoAmI(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var machine model.Machine
 		name := c.Param("name")
@@ -23,7 +24,8 @@ func WhoAmI(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 			entity = &machines
 		}
 
-		_, err := dbOp(entity)
+		_, err := dbs.Machine.GetOneOrMult(entity)
+
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, nil)
 			return
@@ -41,7 +43,7 @@ func WhoAmI(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 	}
 }
 
-func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
+func Register(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var machine model.Machine
 		err := c.ShouldBindJSON(&machine)
@@ -62,7 +64,7 @@ func Register(dbOp func(entity any) (uint, error)) gin.HandlerFunc {
 		machine.Ip = c.RemoteIP()
 		machine.LastSync = time.Now()
 
-		_, err = dbOp(&machine)
+		_, err = dbs.Machine.Insert(&machine)
 
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			c.JSON(http.StatusBadRequest, gin.H {

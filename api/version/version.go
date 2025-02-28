@@ -16,14 +16,7 @@ import (
 
 func GetVersions(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg": "invalid id format",
-			})
-			return
-		}
-
+		id := c.MustGet("id").(uint)
 		versions, err := dbs.Resource.GetVersionsById(uint(id))
 		exit, status, res := api.QueryErr(err)
 		if exit {
@@ -37,16 +30,10 @@ func GetVersions(dbs *lich_db.DbService) gin.HandlerFunc {
 
 func New(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg": "invalid id format",
-			})
-			return
-		}
+		id := c.MustGet("id").(uint)
 
 		var body map[string]any
-		err = c.ShouldBindJSON(&body)
+		err := c.ShouldBindJSON(&body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H {
 				"msg" : "bad body format",

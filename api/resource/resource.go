@@ -62,13 +62,7 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 }
 func GetById(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg": "invalid id format",
-			})
-			return
-		}
+		id := c.MustGet("id").(uint)
 		resource, err := dbs.Resource.GetById(uint(id))
 		exit, status, res := api.QueryErr(err)
 		if exit {
@@ -79,9 +73,9 @@ func GetById(dbs *lich_db.DbService) gin.HandlerFunc {
 	}
 }
 
-func GetAll(dbOp func() ([]model.Resource, error)) gin.HandlerFunc {
+func GetAll(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		resources, err := dbOp()
+		resources, err := dbs.Resource.GetAllResource()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, nil)
 			return
@@ -98,13 +92,8 @@ func GetAll(dbOp func() ([]model.Resource, error)) gin.HandlerFunc {
 }
 func DeleteById(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseUint(c.Param("id"), 10, 0)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H {
-				"msg": "invalid id format",
-			})
-			return
-		}
+		id := c.MustGet("id").(uint)
+		 
 		rows, err := dbs.Resource.DeleteById(uint(id))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
