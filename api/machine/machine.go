@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -81,8 +82,34 @@ func Register(dbs *lich_db.DbService) gin.HandlerFunc {
 			return
 		}
 
+		session := sessions.Default(c)
+		session.Set("id", machine.ID)
+		session.Save()
 		c.JSON(http.StatusOK, machine)
 	}
 
+}
+
+func ActAs(dbs *lich_db.DbService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		machine_id := c.MustGet("machine_id").(uint)
+		_, err := dbs.Machine.GetById(machine_id)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, nil)
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H {
+				"msg" : "internal server error",
+				"err" : err.Error(),
+			})
+			return
+		}
+
+		session := sessions.Default(c)
+		session.Set("id", machine_id)
+		session.Save()
+		c.JSON(http.StatusNoContent, nil)
+	}
 }
 

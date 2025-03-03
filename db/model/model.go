@@ -22,34 +22,35 @@ type Machine struct {
 
 type Resource struct {
 	Model
-	Name string `json:"name" binding:"required" gorm:"unique"`
-	Type string `json:"type" binding:"required"`
+	Name string `json:"name" gorm:"unique"`
+	Type string `json:"type"`
 	LastChangeAt time.Time `json:"last_change_at"`
 
 	CurrentVersionID uint `json:"current_version_id"`
 
-	MachineID uint `json:"machine_id" binding:"required"`
+	MachineID uint `json:"-"` 
 	Machine Machine `json:"machine"`
 }
 
 
-// Url?
-// Blob?
 type Version struct {
 	Model
 	Num uint `json:"num"`
 	Blob string `json:"blob"`
 
-	ResourceID uint `json:"resource_id"`
+	ResourceID uint `json:"-"`
 	Resource Resource `json:"resource"`
+
+	VersionAuthorID uint `json:"-"`
+	VersionAuthor Machine `json:"version_author"`
 }
 
 type Subscription struct {
 	Model
-	MachineID uint `json:"machine_id"`
+	MachineID uint `json:"-"`
 	Machine Machine `json:"machine"`
 
-	ResourceID uint `json:"resource_id"`
+	ResourceID uint `json:"-"`
 	Resource Resource `json:"resource"`
 }
 

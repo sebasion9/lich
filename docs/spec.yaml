@@ -9,7 +9,7 @@ paths:
   /machine/register:
     put:
       summary: Creates machine and returns itself
-      description: 'Should be used by client if no machine is cached.'
+      description: 'Creates machine and immediately creates session for this machine'
       operationId: ''
       tags:
         - machine
@@ -25,6 +25,11 @@ paths:
                   type: string
       responses:
         '200':
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: lichsession=abcde12345; Path=/; Expires=Wed, 02 Apr 2025 19:10:55 GMT; Max-Age=2592000
           description: success
           content:
             application/json:
@@ -61,10 +66,36 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
+  /machine/actas/{machine_id}:
+    get:
+      summary: Creates a session, where all actions are performed by machine_id
+      description: Act as provided machine_id
+      tags:
+        - machine
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: integer
+      responses:
+        '200':
+          description: success
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: lichsession=abcde12345; Path=/; Expires=Wed, 02 Apr 2025 19:10:55 GMT; Max-Age=2592000
+    
+    
+    
   /resource/new:
     put:
       summary: Creates new Resource
       description: 'Used on initializing Resource definition'
+      security:
+        - cookieAuth: []
       tags:
         - resource
       requestBody:
@@ -92,6 +123,8 @@ paths:
                 $ref: '#/components/schemas/Resource'
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
 
   /resource/all:
     get:
@@ -134,6 +167,8 @@ paths:
           $ref: '#/components/responses/404Error'
     delete:
       summary: Delete Resource defintion, deletes all versions.
+      security:
+        - cookieAuth: []
       tags:
         - resource
       parameters:
@@ -148,12 +183,18 @@ paths:
           description: success no content
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
         '404':
           $ref: '#/components/responses/404Error'
 
   /resource/version/new-version/{id}:
     put:
       summary: Create new version on resource.
+      security:
+        - cookieAuth: []
       description: "Warning: creating new version sets Resource's current version. Adding new version edits Resource definition (last_change_at)"
       tags:
         - version
@@ -182,6 +223,8 @@ paths:
                 $ref: '#/components/schemas/Version'
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
           
@@ -208,9 +251,11 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /sub/{resource_id}/{machine_id}:
+  /sub/{resource_id}:
     put:
       summary: Subscribes Machine to Resource, on sync it fetches current version if Resource changed since last sync.
+      security:
+        - cookieAuth: []
       tags:
         - subscription
       parameters:
@@ -220,36 +265,28 @@ paths:
           description: id of resource
           schema:
             type: integer
-        - name: machine_id
-          in: path
-          required: true
-          description: id of machine
-          schema:
-            type: integer
       responses:
         '204':
           description: success no content
-  /sub/{id}:
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '404':
+          $ref: '#/components/responses/404Error'
     get:
-      summary: Retrieve all subscriptions by Machine
+      summary: Retrieve subscription by id
+      security:
+        - cookieAuth: []
       tags:
         - subscription
       parameters:
-        - name: id
+        - name: resource_id
           in: path
           required: true
-          description: either machine_id or resource_id
+          description: id of resource
           schema:
             type: integer
-        - name: by
-          in: query
-          required: false
-          description: default = machine
-          schema:
-            type: string
-            enum:
-              - machine
-              - resource
       responses:
         '200':
           description: success
@@ -262,22 +299,40 @@ paths:
                     $ref: '#/components/schemas/Subscription'
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
-      
+  /sub:
+    get:
+      summary: Retrieve all subscriptions by Machine
+      security:
+        - cookieAuth: []
+      tags:
+        - subscription
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sub:
+                    $ref: '#/components/schemas/SubscriptionArray'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '404':
+          $ref: '#/components/responses/404Error'
   /sync:
-    post:
+    get:
       summary: Synchronizes subscribed resources if changed since last sync.
+      security:
+        - cookieAuth: []
       tags:
         - sync
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                machine_id:
-                  type: integer
-                  format: id
       responses:
         '200':
           description: success
@@ -289,11 +344,15 @@ paths:
           description: success no content
         '400':
           $ref: '#/components/responses/400Error'
-  /sync/{id}:
-    post:
+        '401':
+          $ref: '#/components/responses/401Error'
+  /sync/{resource_id}:
+    get:
       summary: Synchronizes selected resource (forcefully)
+      security:
+        - cookieAuth: []
       parameters:
-        - name: id
+        - name: resource_id
           required: true
           in: path
           schema:
@@ -301,14 +360,6 @@ paths:
             format: id
       tags:
         - sync
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                machine_id:
-                  type: integer
-                  format: id
       responses:
         '200':
           description: success
@@ -318,19 +369,23 @@ paths:
                 $ref: '#/components/schemas/Version'
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /sync/{id}/{versionId}:
-    post:
+  /sync/{resource_id}/{version_id}:
+    get:
       summary: Synchronizes selected version of Resource (forcefully)
+      security:
+        - cookieAuth: []
       parameters:
-        - name: id
+        - name: resource_id
           required: true
           in: path
           schema:
             type: integer
             format: id
-        - name: versionId
+        - name: version_id
           required: true
           in: path
           schema:
@@ -347,6 +402,8 @@ paths:
                 $ref: '#/components/schemas/Version'
         '400':
           $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
             
@@ -419,6 +476,8 @@ components:
         num:
           type: integer
           format: integer
+        version_author:
+          $ref: '#/components/schemas/Machine'
         resource:
           $ref: '#/components/schemas/Resource'
     VersionArray:
@@ -438,6 +497,10 @@ components:
           $ref: '#/components/schemas/Machine'
         resource:
           $ref: '#/components/schemas/Resource'
+    SubscriptionArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/Subscription'
     ErrorResponse:
       type: object
       properties:
@@ -476,6 +539,11 @@ components:
             message: This resource is forbidden for this scope of permissions
     404Error:
       description: requested resource not found
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: lichsession
 tags:
   - name: machine
     description: Everything related to Machine entity

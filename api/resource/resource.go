@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -17,7 +18,6 @@ type newResource struct {
 	Blob string `json:"blob"`
 	Name string `json:"name"`
 	Type string `json:"type"`
-	MachineId uint `json:"machine_id"`
 }
 
 func New(dbs *lich_db.DbService) gin.HandlerFunc {
@@ -31,10 +31,11 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 			})
 			return
 		}
+		machine_id := sessions.Default(c).Get("id").(uint)
 
 		resource.Name = newResource.Name
 		resource.Type = newResource.Type
-		resource.MachineID = newResource.MachineId
+		resource.MachineID = machine_id
 
 		if resource.Name == "" || resource.Type == "" {
 			c.JSON(http.StatusBadRequest, gin.H {
