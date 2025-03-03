@@ -1,6 +1,7 @@
 package stmt
 
 import (
+	"errors"
 	"lich/db/model"
 	"time"
 
@@ -13,21 +14,22 @@ type resourceService struct {
 
 func (rs *resourceService) GetAllResource() ([]model.Resource, error) {
 	var resources []model.Resource
-	err := rs.Preload("Machine").Find(&resources).Error
+	err := rs.Preload("AuthorMachine").Find(&resources).Error
 	return resources, err
 }
 
 func (rs *resourceService) GetById(id uint) (model.Resource, error) {
 	var resource model.Resource
 	resource.ID = id
-	err := rs.Preload("Machine").First(&resource).Error
+	err := rs.Preload("AuthorMachine").First(&resource).Error
 	return resource, err
 }
 func (rs *resourceService) GetVersionsById(id uint) ([]model.Version, error) {
 	var versions []model.Version
 	err := rs.Where("resource_id = ?", id).
 	Preload("Resource").
-	Preload("Resource.Machine").
+	Preload("Resource.AuthorMachine").
+	Preload("VersionAuthor").
 	Find(&versions).Error
 	return versions, err
 }
@@ -55,7 +57,7 @@ func (rs *resourceService) Insert(res model.Resource, blob string) (model.Resour
 			return err
 		}
 
-		err = tx.Preload("Machine").First(&res).Error
+		err = tx.Preload("AuthorMachine").First(&res).Error
 		if err != nil {
 			return err
 		}
@@ -65,17 +67,27 @@ func (rs *resourceService) Insert(res model.Resource, blob string) (model.Resour
 	return res, err
 }
 
-func (rs *resourceService) DeleteById(id uint) (int, error) {
+func (rs *resourceService) DeleteById(resource_id uint, machine_id uint) (int, error) {
 	var resource model.Resource
-	resource.ID = id
+	resource.ID = resource_id
 
 	var rowsAffected int = 0
 	err := rs.Transaction(func (tx *gorm.DB) error {
-		if err := tx.Delete(&resource).Error; err != nil {
+		var check_res model.Resource
+		check_res.ID = resource_id
+		if res := tx.Find(&check_res); res.Error != nil {
+			return res.Error
+		}
+
+		if check_res.AuthorMachineID != machine_id {
+			return errors.New("ErrForbidden")
+		}
+
+		if err := tx.Where("author_machine_id = ?", machine_id).Delete(&resource).Error; err != nil {
 			return err
 		}
 		var versions []model.Version
-		res := tx.Where("resource_id = ?", id).Delete(&versions)
+		res := tx.Where("resource_id = ?", resource_id).Delete(&versions)
 		if res.Error != nil {
 			return res.Error
 		}
@@ -85,14 +97,15 @@ func (rs *resourceService) DeleteById(id uint) (int, error) {
 	return rowsAffected, err
 }
 
-func (rs *resourceService) NewVersion(id uint, blob string) (model.Version, error) {
+func (rs *resourceService) NewVersion(resource_id uint, machine_id uint, blob string) (model.Version, error) {
 	var version model.Version
 	err := rs.Transaction(func(tx *gorm.DB) error {
 		version.Blob = blob
-		version.ResourceID = id
+		version.ResourceID = resource_id
+		version.VersionAuthorID = machine_id
 
 		var count int64 = 0
-		err := tx.Model(&model.Version{}).Where("resource_id = ?", id).Count(&count).Error
+		err := tx.Model(&model.Version{}).Where("resource_id = ?", resource_id).Count(&count).Error
 		if err != nil {
 			return err
 		}
@@ -104,7 +117,7 @@ func (rs *resourceService) NewVersion(id uint, blob string) (model.Version, erro
 		}
 
 		res := tx.Model(&model.Resource{}).
-			Where("id = ?", id).
+			Where("id = ?", resource_id).
 			Update("CurrentVersionID", version.ID).
 			Update("LastChangeAt", time.Now())
 		err = res.Error
@@ -115,7 +128,7 @@ func (rs *resourceService) NewVersion(id uint, blob string) (model.Version, erro
 			return gorm.ErrRecordNotFound
 		}
 
-		err = tx.Preload("Resource").Preload("Resource.Machine").Find(&version).Error
+		err = tx.Preload("Resource").Preload("Resource.AuthorMachine").Preload("VersionAuthor").Find(&version).Error
 		if err != nil {
 			return err
 		}

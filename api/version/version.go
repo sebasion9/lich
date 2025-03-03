@@ -7,6 +7,7 @@ import (
 	"lich/api"
 	lich_db "lich/db/stmt"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -15,7 +16,7 @@ import (
 
 func GetVersions(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.MustGet("id").(uint)
+		id := c.MustGet("resource_id").(uint)
 		versions, err := dbs.Resource.GetVersionsById(uint(id))
 		exit, status, res := api.QueryErr(err)
 		if exit {
@@ -29,7 +30,9 @@ func GetVersions(dbs *lich_db.DbService) gin.HandlerFunc {
 
 func New(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.MustGet("id").(uint)
+		resource_id := c.MustGet("resource_id").(uint)
+		machine_id := sessions.Default(c).Get("id").(uint)
+
 
 		var body map[string]any
 		err := c.ShouldBindJSON(&body)
@@ -41,7 +44,7 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 		}
 
 		if blob, ok:= body["blob"].(string); ok == true {
-			version, err := dbs.Resource.NewVersion(uint(id), blob)
+			version, err := dbs.Resource.NewVersion(resource_id, machine_id, blob)
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, nil)
 				return

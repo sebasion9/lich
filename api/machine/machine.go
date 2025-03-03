@@ -15,14 +15,20 @@ import (
 func WhoAmI(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var machine model.Machine
-		name := c.Param("name")
-		machine.Name = name
+		var entity any
 
-		var entity any = &machine
-		if machine.Name == ":name" {
+		name := c.Param("name")
+		machine_id := sessions.Default(c).Get("id")
+
+		if machine_id, ok := machine_id.(uint); ok == true {
+			machine.ID = machine_id
+			entity = &machine
+		} else if name != ":name" {
+			machine.Name = name
+			entity = &machine
+		} else {
 			machine.Ip = c.RemoteIP()
-			machines := []model.Machine{machine}
-			entity = &machines
+			entity = &[]model.Machine{machine}
 		}
 
 		_, err := dbs.Machine.GetOneOrMult(entity)

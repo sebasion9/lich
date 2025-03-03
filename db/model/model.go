@@ -28,8 +28,8 @@ type Resource struct {
 
 	CurrentVersionID uint `json:"current_version_id"`
 
-	MachineID uint `json:"-"` 
-	Machine Machine `json:"machine"`
+	AuthorMachineID uint `json:"-"` 
+	AuthorMachine Machine `json:"author_machine"`
 }
 
 

@@ -32,7 +32,7 @@ func (ms *machineService) GetOneOrMult(entity any) (uint, error) {
 	switch val := entity.(type) {
 		// machine is either []Machine by(ip) or Machine by(name),
 	case *model.Machine:
-		err = query.Where("name = ?", val.Name).First(&val).Error
+		err = query.First(&val).Error
 		id = val.ID
 		entity = val
 	case *[]model.Machine:

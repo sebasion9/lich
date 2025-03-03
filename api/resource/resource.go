@@ -35,7 +35,7 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 
 		resource.Name = newResource.Name
 		resource.Type = newResource.Type
-		resource.MachineID = machine_id
+		resource.AuthorMachineID = machine_id
 
 		if resource.Name == "" || resource.Type == "" {
 			c.JSON(http.StatusBadRequest, gin.H {
@@ -50,7 +50,7 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 		blob := newResource.Blob
 
 
-		_, err = dbs.Machine.GetById(resource.MachineID)
+		_, err = dbs.Machine.GetById(resource.AuthorMachineID)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusBadRequest, gin.H {
 				"msg" : "machine with provided id doesn't exist",
@@ -70,7 +70,7 @@ func New(dbs *lich_db.DbService) gin.HandlerFunc {
 }
 func GetById(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.MustGet("id").(uint)
+		id := c.MustGet("resource_id").(uint)
 		resource, err := dbs.Resource.GetById(uint(id))
 		exit, status, res := api.QueryErr(err)
 		if exit {
@@ -100,9 +100,16 @@ func GetAll(dbs *lich_db.DbService) gin.HandlerFunc {
 }
 func DeleteById(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.MustGet("id").(uint)
+		resource_id := c.MustGet("resource_id").(uint)
+		machine_id := sessions.Default(c).Get("id").(uint)
 		 
-		rows, err := dbs.Resource.DeleteById(uint(id))
+		rows, err := dbs.Resource.DeleteById(resource_id, machine_id)
+		if err != nil && err.Error() == "ErrForbidden" {
+			c.JSON(http.StatusForbidden, gin.H {
+				"msg" : "Forbidden",
+			})
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
 				"msg" : "internal server error",

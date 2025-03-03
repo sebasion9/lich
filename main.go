@@ -58,15 +58,15 @@ func main() {
 
 	resource := r.Group("resource")
 	{
-		resource.PUT("/new", middleware.Auth(), api_resource.New(&dbs))
+		resource.PUT("/new", middleware.Auth, api_resource.New(&dbs))
 		resource.GET("/all", api_resource.GetAll(&dbs))
 
-		resource.GET(":id", middleware.PathParamUint("id"), api_resource.GetById(&dbs))
-		resource.DELETE(":id", middleware.PathParamUint("id"), api_resource.DeleteById(&dbs))
+		resource.GET(":resource_id", middleware.PathParamUint("resource_id"), api_resource.GetById(&dbs))
+		resource.DELETE(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_resource.DeleteById(&dbs))
 
 		// version
-		resource.PUT("/version/new-version/:id", middleware.PathParamUint("id"), api_version.New(&dbs))
-		resource.GET("/version/:id", middleware.PathParamUint("id"), api_version.GetVersions(&dbs))
+		resource.PUT("/version/new-version/:resource_id", middleware.PathParamUint("resource_id"), api_version.New(&dbs))
+		resource.GET("/version/:resource_id", middleware.PathParamUint("resource_id"), api_version.GetVersions(&dbs))
 	}
 
 	subscribe := r.Group("subscribe")
