@@ -71,7 +71,6 @@ func main() {
 
 	subscribe := r.Group("subscribe")
 	{
-		// TODO:
 		subscribe.PUT(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.Subscribe(&dbs))
 		subscribe.GET(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.GetOne(&dbs))
 		subscribe.DELETE(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.DeleteById(&dbs))
@@ -80,8 +79,9 @@ func main() {
 	sync := r.Group("sync")
 	{
 		// TODO:
-		sync.GET(":machine_id/:resource_id/", middleware.PathParamUint("machine_id", "resource_id"), api_sync.SyncForce(&dbs))
-		sync.GET(":machine_id/:resource_id/:version_id", middleware.PathParamUint("machine_id", "resource_id"), func(ctx *gin.Context) {})
+		sync.GET("", middleware.Auth, api_sync.Sync(&dbs))
+		sync.GET(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_sync.SyncRes(&dbs))
+		sync.GET(":resource_id/:version_num", middleware.Auth, middleware.PathParamUint("resource_id", "version_num"), api_sync.SyncVer(&dbs))
 	}
 
 	panic(r.Run())

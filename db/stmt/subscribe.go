@@ -2,6 +2,7 @@ package stmt
 
 import (
 	"lich/db/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -16,6 +17,7 @@ func (ss *subService) Insert(machine_id uint, resource_id uint) (model.Subscript
 	var sub model.Subscription
 	sub.MachineID = machine_id
 	sub.ResourceID = resource_id
+	sub.LastSync = time.Now()
 
 	err := ss.Transaction(func(tx *gorm.DB) error {
 		var machine model.Machine

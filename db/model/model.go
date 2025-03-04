@@ -17,7 +17,6 @@ type Machine struct {
 	Ip string `json:"ip"`
 	Os string `json:"os"`
 
-	LastSync time.Time `json:"last_sync"`
 }
 
 type Resource struct {
@@ -52,6 +51,8 @@ type Subscription struct {
 
 	ResourceID uint `json:"-"`
 	Resource Resource `json:"resource"`
+
+	LastSync time.Time `json:"last_sync"`
 }
 
 

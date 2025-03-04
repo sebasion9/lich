@@ -5,7 +5,6 @@ import (
 	"lich/db/model"
 	lich_db "lich/db/stmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -69,7 +68,6 @@ func Register(dbs *lich_db.DbService) gin.HandlerFunc {
 		}
 
 		machine.Ip = c.RemoteIP()
-		machine.LastSync = time.Now()
 
 		_, err = dbs.Machine.Insert(&machine)
 

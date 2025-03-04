@@ -1,8 +1,8 @@
 package stmt
 
 import (
-	"fmt"
 	"lich/db/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -13,31 +13,62 @@ type syncService struct {
 	*gorm.DB
 }
 
-
-
-// get machine and resource using sub
-// 1. no version_id
-// if machine.last_sync < resource.last_change
-// fetch resource.version
-// set machine.last_sync
-// 2. if version_id
-// fetch resource->version_id
-// set machine.last_sync
-
-// if machine and resource exist and version ahhgggg
-func (sy *syncService) SyncOneVer(sub model.Subscription, version_id string) (model.Version, error) {
+func (sy *syncService) ByResource(machine_id uint, resource_id uint) (model.Version, error){
+	var ver model.Version
+	var res model.Resource
 	err := sy.Transaction(func(tx *gorm.DB) error {
-		err := tx.Preload("Machine").Preload("Resource.Machine").First(sub).Error
+		res.ID = resource_id
+		err := tx.First(&res).Error
 		if err != nil {
-			return err 
+			return err
 		}
 
-		if sub.Machine.LastSync.Unix() < sub.Resource.LastChangeAt.Unix() {
-			// fetch R
-
+		ver.ID = res.CurrentVersionID
+		err = tx.Preload("Resource.AuthorMachine").Preload("VersionAuthor").First(&ver).Error
+		if err != nil {
+			return err
 		}
+
+		res := tx.Model(&model.Subscription{}).
+		Where("resource_id = ?", resource_id).
+		Where("machine_id = ?", machine_id).
+		Update("LastSync", time.Now())
+		if res.Error!= nil {
+			return res.Error
+		}
+
+		if res.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return err
+	})
+	return ver, err
+}
+
+func (sy *syncService) ByVerNum(machine_id uint, resource_id uint, ver_num uint) (model.Version, error) {
+	var ver model.Version
+
+	err := sy.Where("resource_id = ?", resource_id).
+	Where("num = ?", ver_num).
+	Preload("Resource.AuthorMachine").
+	Preload("VersionAuthor").
+	First(&ver).Error
+
+	return ver, err
+}
+
+func (sy *syncService) Sub(machine_id uint) ([]model.Version, error) {
+	var vers []model.Version
+	var subs []model.Subscription
+	err := sy.Transaction(func(tx *gorm.DB) error {
+
 		return nil
 	})
-	fmt.Println(sub)
-	return model.Version{}, err
+	return vers, err
 }
+
+
+
+
+
