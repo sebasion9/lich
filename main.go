@@ -71,8 +71,11 @@ func main() {
 
 	subscribe := r.Group("subscribe")
 	{
-		subscribe.PUT(":resource_id/:machine_id", middleware.PathParamUint("resource_id", "machine_id"), api_subscribe.Subscribe(&dbs))
-		subscribe.GET(":id", middleware.PathParamUint("id"), api_subscribe.GetMult(&dbs))
+		// TODO:
+		subscribe.PUT(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.Subscribe(&dbs))
+		subscribe.GET(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.GetOne(&dbs))
+		subscribe.DELETE(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_subscribe.DeleteById(&dbs))
+		subscribe.GET("", middleware.Auth, api_subscribe.GetMult(&dbs))
 	}
 	sync := r.Group("sync")
 	{

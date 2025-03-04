@@ -40,7 +40,7 @@ paths:
   /machine/{name}:
     get:
       summary: Returns Machine information
-      description: "If name provided, return Machine by name, if not provided, return all Machines registered at this IP"
+      description: "If auth cookie provided return by id, name provided, return Machine by name, if not provided, return all Machines registered at this IP"
       operationId: ''
       tags:
         - machine
@@ -80,16 +80,17 @@ paths:
             type: integer
             format: integer
       responses:
-        '200':
+        '204':
           description: success
           headers:
             Set-Cookie:
               schema:
                 type: string
                 example: lichsession=abcde12345; Path=/; Expires=Wed, 02 Apr 2025 19:10:55 GMT; Max-Age=2592000
-    
-    
-    
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          $ref: '#/components/responses/404Error'
   /resource/new:
     put:
       summary: Creates new Resource
@@ -108,9 +109,6 @@ paths:
                   type: string
                 type:
                   type: string
-                machine_id:
-                  type: integer
-                  format: id
                 blob:
                   type: string
                   format: byte
@@ -125,7 +123,6 @@ paths:
           $ref: '#/components/responses/400Error'
         '401':
           $ref: '#/components/responses/401Error'
-
   /resource/all:
     get:
       summary: Returns all created resources
@@ -189,7 +186,6 @@ paths:
           $ref: '#/components/responses/403Error'
         '404':
           $ref: '#/components/responses/404Error'
-
   /resource/version/new-version/{id}:
     put:
       summary: Create new version on resource.
@@ -227,7 +223,6 @@ paths:
           $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
-          
   /resource/version/{id}:
     get:
       summary: Returns versions of provided resource id.
@@ -251,6 +246,31 @@ paths:
           $ref: '#/components/responses/400Error'
         '404':
           $ref: '#/components/responses/404Error'
+          
+  /sub:
+    get:
+      summary: Retrieve all subscriptions by Machine
+      security:
+        - cookieAuth: []
+      tags:
+        - subscription
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sub:
+                    $ref: '#/components/schemas/SubscriptionArray'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+  
   /sub/{resource_id}:
     put:
       summary: Subscribes Machine to Resource, on sync it fetches current version if Resource changed since last sync.
@@ -303,29 +323,31 @@ paths:
           $ref: '#/components/responses/401Error'
         '404':
           $ref: '#/components/responses/404Error'
-  /sub:
-    get:
-      summary: Retrieve all subscriptions by Machine
+    delete:
+      summary: Delete a subscription by id
       security:
         - cookieAuth: []
       tags:
         - subscription
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          description: id of resource
+          schema:
+            type: integer
       responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  sub:
-                    $ref: '#/components/schemas/SubscriptionArray'
+        '204':
+          description: success no content
         '400':
           $ref: '#/components/responses/400Error'
         '401':
           $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
         '404':
           $ref: '#/components/responses/404Error'
+
   /sync:
     get:
       summary: Synchronizes subscribed resources if changed since last sync.
@@ -455,7 +477,7 @@ components:
         current_version_id:
           type: integer
           format: integer
-        machine:
+        author_machine:
           $ref: '#/components/schemas/Machine'
     ResourceArray:
       type: array

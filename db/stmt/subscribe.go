@@ -39,7 +39,7 @@ func (ss *subService) Insert(machine_id uint, resource_id uint) (model.Subscript
 			return err
 		}
 
-		err = tx.Preload("Resource.Machine").Preload("Machine").First(&sub).Error
+		err = tx.Preload("Resource.AuthorMachine").Preload("Machine").First(&sub).Error
 		if err != nil {
 			return err 
 		}
@@ -49,19 +49,38 @@ func (ss *subService) Insert(machine_id uint, resource_id uint) (model.Subscript
 }
 
 
-func (ss *subService) GetById(id uint, by string) ([]model.Subscription, error) {
-	var sub []model.Subscription
-	var whereStmt string
-	switch by {
-	case "resource":
-		whereStmt = "resource_id = ?"
-	case "machine":
-		whereStmt = "machine_id = ?"
-	default:
-		whereStmt = "resource_id = ?"
-	}
-	err := ss.Where(whereStmt, id).Preload("Resource.Machine").Preload("Machine").Find(&sub).Error
+func (ss *subService) GetById(resource_id uint, machine_id uint) (model.Subscription, error) {
+	var sub model.Subscription
+	sub.MachineID = machine_id
+	err := ss.
+		Where("resource_id = ?", resource_id).
+		Preload("Resource.AuthorMachine").
+		Preload("Machine").
+		First(&sub).Error
 	return sub, err
 }
 
+func (ss *subService) GetMult(machine_id uint) ([]model.Subscription, error) {
+	var sub []model.Subscription
+	err := ss.
+		Where("machine_id = ?", machine_id).
+		Preload("Resource.AuthorMachine").
+		Preload("Machine").
+		First(&sub).Error
+	return sub, err
+}
+
+func (ss *subService) DeleteById(resource_id uint, machine_id uint) (int, error) {
+	var rows int
+	err := ss.Transaction(func(tx *gorm.DB) error {
+		var sub model.Subscription
+		res := tx.Where("resource_id = ?", resource_id).Where("machine_id = ?", machine_id).Delete(&sub)
+		rows = int(res.RowsAffected)
+		if res.Error != nil {
+			return res.Error
+		}
+		return nil
+	})
+	return rows, err
+}
 
