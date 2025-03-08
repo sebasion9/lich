@@ -17,7 +17,7 @@ func (ss *subService) Insert(machine_id uint, resource_id uint) (model.Subscript
 	var sub model.Subscription
 	sub.MachineID = machine_id
 	sub.ResourceID = resource_id
-	sub.LastSync = time.Now()
+	sub.LastSync = time.UnixMicro(0)
 
 	err := ss.Transaction(func(tx *gorm.DB) error {
 		var machine model.Machine
@@ -68,7 +68,7 @@ func (ss *subService) GetMult(machine_id uint) ([]model.Subscription, error) {
 		Where("machine_id = ?", machine_id).
 		Preload("Resource.AuthorMachine").
 		Preload("Machine").
-		First(&sub).Error
+		Find(&sub).Error
 	return sub, err
 }
 

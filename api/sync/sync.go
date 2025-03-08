@@ -12,9 +12,20 @@ import (
 
 func Sync(dbs *lich_db.DbService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// machine_id := sessions.Default(c).Get("id").(uint)
-		// vers, err := dbs.Sync.Sub(machine_id)
-
+		machine_id := sessions.Default(c).Get("id").(uint)
+		vers, err := dbs.Sync.Sub(machine_id)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNoContent, nil)
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H {
+				"msg": "internal server error",
+				"err" : err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, vers)
 		// get subs by mach id
 		// for every sub, if sub.res.change_date > mach.last_sync
 		// return []ver where ver = res[curr_ver]

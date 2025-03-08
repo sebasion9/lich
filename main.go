@@ -78,7 +78,6 @@ func main() {
 	}
 	sync := r.Group("sync")
 	{
-		// TODO:
 		sync.GET("", middleware.Auth, api_sync.Sync(&dbs))
 		sync.GET(":resource_id", middleware.Auth, middleware.PathParamUint("resource_id"), api_sync.SyncRes(&dbs))
 		sync.GET(":resource_id/:version_num", middleware.Auth, middleware.PathParamUint("resource_id", "version_num"), api_sync.SyncVer(&dbs))

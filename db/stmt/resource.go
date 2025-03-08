@@ -47,6 +47,7 @@ func (rs *resourceService) Insert(res model.Resource, blob string) (model.Resour
 			return err
 		}
 		ver.ResourceID = res.ID
+		ver.VersionAuthorID = res.AuthorMachineID
 		err = tx.Create(&ver).Error
 		if err != nil {
 			return err
